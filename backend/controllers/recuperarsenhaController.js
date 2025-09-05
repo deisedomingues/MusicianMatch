@@ -31,7 +31,8 @@ export const solicitarRedefinicaoSenha = async (req, res) => {
       [usuario.cpf, token, expiracao]
     );
 
-    const link = `http://localhost:3000/resetar-senha?token=${token}`;
+
+const link = `frontend://auth/redefinir-senha?token=${token}`;
 
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
