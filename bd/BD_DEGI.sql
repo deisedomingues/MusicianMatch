@@ -1,13 +1,15 @@
-CREATE DATABASE Musician_Match;
+CREATE DATABASE IF NOT EXISTS Musician_Match;
 USE Musician_Match;
+
 CREATE TABLE Usuario (
     cpf VARCHAR(11) PRIMARY KEY,      
     nome VARCHAR(100) NOT NULL,   
     email VARCHAR(100) NOT NULL UNIQUE, 
-    senha cpf VARCHAR(100)
+    senha VARCHAR(100) NOT NULL,
     telefone VARCHAR(15),
     tipo ENUM('comum', 'musico') NOT NULL
 );
+
 CREATE TABLE Musico (
     cpf_usuario VARCHAR(11) PRIMARY KEY,
     instrumentos TEXT,
@@ -44,4 +46,5 @@ CREATE TABLE Instrumento (
     cpf_musico VARCHAR(11),
     FOREIGN KEY (cpf_musico) REFERENCES Musico(cpf_usuario)
 );
+
 

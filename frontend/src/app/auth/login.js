@@ -8,11 +8,11 @@ import {
   TouchableOpacity,
 } from "react-native";
 import * as Animatable from "react-native-animatable";
-import axios from "axios";
 import { useState } from "react";
 import { FontAwesome } from "@expo/vector-icons";
 import api from "../api/api";
-import { LinearGradient } from 'expo-linear-gradient';
+import { LinearGradient } from "expo-linear-gradient";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function Login() {
   const { name } = useLocalSearchParams();
@@ -38,7 +38,8 @@ export default function Login() {
 
     setErro("");
 
-    const emailValido = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(?:\.[a-zA-Z]{2,})?$/;
+    const emailValido =
+      /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(?:\.[a-zA-Z]{2,})?$/;
 
     if (!emailValido.test(email)) {
       alert("Por favor, insira um email válido.");
@@ -49,7 +50,11 @@ export default function Login() {
 
     try {
       const response = await api.post("/login", { email, senha });
-      console.log(response.data);
+      const { usuario, token } = response.data;
+
+      await AsyncStorage.setItem("userToken", token);
+      await AsyncStorage.setItem("userData", JSON.stringify(usuario));
+
       router.push("/telas/home");
     } catch (error) {
       console.error(error);
@@ -60,15 +65,27 @@ export default function Login() {
   };
 
   return (
-    <LinearGradient colors={["#1E1E1E", "#473CA6", "#2F253E"]} style={{ flex: 1 }}>
+    <LinearGradient
+      colors={["#1E1E1E", "#473CA6", "#2F253E"]}
+      style={{ flex: 1 }}
+    >
       <SafeAreaView style={{ flex: 1 }}>
-        <Animatable.View animation="fadeInLeft" delay={500} style={styles.cabecalho}>
+        <Animatable.View
+          animation="fadeInLeft"
+          delay={500}
+          style={styles.cabecalho}
+        >
           <Text style={styles.logo}>Musician&Match</Text>
         </Animatable.View>
 
         <Animatable.View animation="fadeInUp" style={styles.areaFormulario}>
           <View style={styles.inputContainer}>
-            <FontAwesome name={"at"} size={30} color={"#ffff"} style={styles.inputIcon} />
+            <FontAwesome
+              name={"at"}
+              size={30}
+              color={"#ffff"}
+              style={styles.inputIcon}
+            />
             <TextInput
               style={styles.textInput}
               placeholder="E-mail"
@@ -80,7 +97,12 @@ export default function Login() {
           </View>
 
           <View style={styles.inputContainer}>
-            <FontAwesome name={"lock"} size={30} color={"#ffff"} style={styles.inputIcon} />
+            <FontAwesome
+              name={"lock"}
+              size={30}
+              color={"#ffff"}
+              style={styles.inputIcon}
+            />
             <TextInput
               style={styles.textInput}
               placeholder="Senha"
@@ -96,11 +118,17 @@ export default function Login() {
           </Text>
 
           {erro !== "" && (
-            <Text style={{ color: "red", textAlign: "center", marginBottom: 10 }}>{erro}</Text>
+            <Text
+              style={{ color: "red", textAlign: "center", marginBottom: 10 }}
+            >
+              {erro}
+            </Text>
           )}
 
           <TouchableOpacity style={styles.botaoLogin} onPress={enviaLogin}>
-            <Text style={styles.textoBotaoLogin}>{loading ? "Acessando..." : "Acessar"}</Text>
+            <Text style={styles.textoBotaoLogin}>
+              {loading ? "Acessando..." : "Acessar"}
+            </Text>
           </TouchableOpacity>
 
           <View style={styles.divisorContainer}>
@@ -114,9 +142,13 @@ export default function Login() {
             <Text style={styles.textoBotaoGoogle}>Acessar com Google</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.botaoCadastro} onPress={() => router.push("/auth/register")}>
+          <TouchableOpacity
+            style={styles.botaoCadastro}
+            onPress={() => router.push("/auth/register")}
+          >
             <Text style={styles.textoCadastro}>
-              Não possui uma conta? <Text style={styles.textoCadastreSe}>Cadastre-se</Text>
+              Não possui uma conta?{" "}
+              <Text style={styles.textoCadastreSe}>Cadastre-se</Text>
             </Text>
           </TouchableOpacity>
         </Animatable.View>
@@ -150,7 +182,7 @@ const styles = StyleSheet.create({
     paddingEnd: "8%",
     paddingHorizontal: "8%",
   },
-  botaoLogin: { //Acessar
+  botaoLogin: {
     backgroundColor: "#fff",
     width: "100%",
     borderRadius: 25,
@@ -175,13 +207,13 @@ const styles = StyleSheet.create({
     marginTop: 14,
     alignItems: "center",
     justifyContent: "center",
-    flexDirection: "row", 
+    flexDirection: "row",
   },
   textoBotaoGoogle: {
     color: "#fff",
     fontSize: 18,
     fontWeight: "bold",
-    marginLeft: 60, 
+    marginLeft: 60,
   },
   botaoVoltar: {
     backgroundColor: "#fff",
@@ -228,11 +260,9 @@ const styles = StyleSheet.create({
     height: 60,
     elevation: 65,
     width: "100%",
-
-    //ios
-    shadowColor: "#000",              
-    shadowOffset: { width: 0, height: 4 },  
-    shadowOpacity: 0.3,               
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
     shadowRadius: 6,
   },
   inputIcon: {
@@ -240,13 +270,14 @@ const styles = StyleSheet.create({
   },
   textInput: {
     flex: 1,
-    paddingLeft: 15
+    paddingLeft: 15,
+    color: "#fff", // Texto de email e senha alterados para branco
   },
   bolinha: {
-  width: 10,
-  height: 10,
-  borderRadius: 5,
-  backgroundColor: "#fff",
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: "#fff",
   },
   linha: {
     flex: 1,
@@ -262,4 +293,3 @@ const styles = StyleSheet.create({
     marginVertical: 20,
   },
 });
-

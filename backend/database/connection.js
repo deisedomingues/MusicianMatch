@@ -1,6 +1,6 @@
-import mysql from 'mysql2/promise';  // Note o 'promise' para usar async/await
-import dotenv from 'dotenv';
-import fs from 'fs';
+import mysql from "mysql2/promise"; // Note o 'promise' para usar async/await
+import dotenv from "dotenv";
+import fs from "fs";
 
 dotenv.config();
 
@@ -10,12 +10,17 @@ const pool = mysql.createPool({
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  ssl: {
-    ca: fs.readFileSync('./certs/ca.pem')
-  },
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
 });
+
+try {
+  const connection = await pool.getConnection();
+  console.log("✅ Conectado ao MySQL com sucesso!");
+  connection.release();
+} catch (error) {
+  console.error("❌ Erro ao conectar ao MySQL:", error.message);
+}
 
 export default pool;

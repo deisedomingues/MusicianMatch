@@ -1,18 +1,43 @@
 import { View, StyleSheet, Text, TouchableOpacity, Image } from "react-native";
 import { useEffect, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { useRouter } from "expo-router";
 import api from "../api/api";
 
 export default function Home() {
-  const [user, setUser] = useState([]);
+  const [usersList, setUsersList] = useState([]);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
+  const loadUserData = async () => {
+    try {
+      const userDataString = await AsyncStorage.getItem("userData");
+
+      if (userDataString) {
+        const userData = JSON.parse(userDataString);
+        setUser(userData);
+      } else {
+        router.replace("/auth/login");
+      }
+    } catch (error) {
+      console.error(
+        "Erro ao carregar dados do usuário do AsyncStorage:",
+        error
+      );
+      router.replace("/auth/login");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
+    loadUserData();
     api
       .get("/users")
       .then((response) => {
-        setUser(response.data);
+        setUsersList(response.data);
       })
       .catch((error) => {
         console.error("Erro ao obter dados do usuário:", error);
@@ -20,10 +45,10 @@ export default function Home() {
   }, []);
 
   const handleEdit = () => {
-    router.push("/editar");
+    router.push("/telas/editProfile");
   };
 
-  if (!user) {
+  if (loading || !user) {
     return (
       <View style={styles.container}>
         <Text>Carregando dados do usuário...</Text>
@@ -40,15 +65,17 @@ export default function Home() {
         {/* Ícone de perfil */}
         <TouchableOpacity onPress={handleEdit}>
           <Image
-            source={{ uri: "https://via.placeholder.com/40" }} // Fotografia
+            source={{ uri: "https://picsum.photos/id/237/200/300" }} // Fotografia
             style={styles.profileIcon}
           />
         </TouchableOpacity>
       </View>
 
+      <Text style={styles.title}>🙋‍♂️ Listagem de usuários</Text>
+
       {/* Informações*/}
-      {user.map((item) => (
-        <View key={item.id} style={styles.userInfo}>
+      {usersList.map((item, index) => (
+        <View key={index} style={styles.userInfo}>
           <Text style={styles.label}>Nome:</Text>
           <Text style={styles.info}>{item.nome}</Text>
 
@@ -114,4 +141,3 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
-
