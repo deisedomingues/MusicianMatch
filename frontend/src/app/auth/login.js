@@ -55,7 +55,7 @@ export default function Login() {
       await AsyncStorage.setItem("userToken", token);
       await AsyncStorage.setItem("userData", JSON.stringify(usuario));
 
-      router.push("/telas/home");
+      router.replace("/(tabs)/home");
     } catch (error) {
       console.error(error);
       alert("Erro no login. Verifique seus dados e tente novamente.");

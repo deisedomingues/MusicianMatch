@@ -6,7 +6,17 @@ const JWT_SECRET = process.env.JWT_SECRET;
 
 export class UserController {
   async create(req, res) {
-    const { nome, email, telefone, senha, cpf, tipo } = req.body;
+    const {
+      nome,
+      email,
+      telefone,
+      senha,
+      cpf,
+      tipo,
+      instrumentos,
+      localizacao,
+      descricao,
+    } = req.body;
 
     try {
       // 🔍 Validações básicas
@@ -52,6 +62,14 @@ export class UserController {
         VALUES (?, ?, ?, ?, ?, ?)`,
         [cpf, nome.trim(), email.trim(), hashSenha, telefone.trim(), tipo]
       );
+
+      if (tipo === "musico") {
+        await pool.query(
+          `INSERT INTO Musico (cpf_usuario, instrumentos, localizacao, descricao, avaliacao)
+        VALUES (?, ?, ?, ?, 0.00)`,
+          [cpf, instrumentos.trim(), localizacao.trim(), descricao.trim()]
+        );
+      }
 
       return res
         .status(201)
@@ -198,12 +216,10 @@ export class UserController {
       // Remove a senha do objeto antes de enviar
       const { senha: _, ...dadoDoUsuarioAtualizado } = usuarioAtualizado;
 
-      return res
-        .status(200)
-        .json({
-          message: "Dados atualizados com sucesso!",
-          usuario: dadoDoUsuarioAtualizado,
-        });
+      return res.status(200).json({
+        message: "Dados atualizados com sucesso!",
+        usuario: dadoDoUsuarioAtualizado,
+      });
     } catch (error) {
       console.error("❌ Erro ao atualizar usuário:", error);
       return res.status(500).json({ message: "Erro interno no servidor." });

@@ -110,7 +110,11 @@ export default function EditarPerfil() {
         "Tem certeza que deseja DELETAR permanentemente sua conta? Esta ação é irreversível.",
         [
           { text: "Cancelar", style: "cancel" },
-          { text: "Sim, Deletar", onPress: confirmDelete, style: "destructive" },
+          {
+            text: "Sim, Deletar",
+            onPress: confirmDelete,
+            style: "destructive",
+          },
         ],
         { cancelable: false }
       );
@@ -162,7 +166,10 @@ export default function EditarPerfil() {
   }
 
   return (
-    <LinearGradient colors={["#1E1E1E", "#473CA6", "#2F253E"]} style={{ flex: 1 }}>
+    <LinearGradient
+      colors={["#1E1E1E", "#473CA6", "#2F253E"]}
+      style={{ flex: 1 }}
+    >
       <SafeAreaView style={{ flex: 1 }}>
         <ScrollView
           contentContainerStyle={{ paddingHorizontal: "8%", paddingTop: 40 }}
@@ -227,13 +234,6 @@ export default function EditarPerfil() {
             <Text style={[styles.buttonText, styles.deleteButtonText]}>
               {isDeleting ? "Deletando..." : "Deletar Perfil"}
             </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.replace("/telas/home")}
-          >
-            <Text style={styles.backButtonText}>Voltar</Text>
           </TouchableOpacity>
         </ScrollView>
       </SafeAreaView>

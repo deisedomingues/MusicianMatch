@@ -1,10 +1,18 @@
 import { router } from "expo-router";
-import { SafeAreaView, View, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity } from "react-native";
+import {
+  SafeAreaView,
+  View,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+} from "react-native";
 import * as Animatable from "react-native-animatable";
 import { useState } from "react";
 import api from "../api/api";
 import { Picker } from "@react-native-picker/picker"; // Lembre-se de instalar: expo install @react-native-picker/picker
-import { LinearGradient } from 'expo-linear-gradient';
+import { LinearGradient } from "expo-linear-gradient";
 import { FontAwesome } from "@expo/vector-icons";
 
 export default function Register() {
@@ -56,16 +64,8 @@ export default function Register() {
         senha,
         cpf,
         tipo,
+        ...(tipo === "musico" && { instrumentos, localizacao, descricao }),
       });
-
-      if (tipo === "musico") {
-        await api.post("/register-musico", {
-          cpf_usuario: cpf,
-          instrumentos,
-          localizacao,
-          descricao,
-        });
-      }
 
       alert("Cadastro realizado com sucesso!");
       router.push("/auth/login");
@@ -76,14 +76,24 @@ export default function Register() {
   };
 
   return (
-    <LinearGradient colors={["#1E1E1E", "#473CA6", "#2F253E"]} style={{ flex: 1 }}>
+    <LinearGradient
+      colors={["#1E1E1E", "#473CA6", "#2F253E"]}
+      style={{ flex: 1 }}
+    >
       <SafeAreaView style={{ flex: 1 }}>
-        <Animatable.View animation="fadeInLeft" delay={500} style={styles.cabecalho}>
+        <Animatable.View
+          animation="fadeInLeft"
+          delay={500}
+          style={styles.cabecalho}
+        >
           <Text style={styles.mensagem}>Cadastro</Text>
         </Animatable.View>
 
         <ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled">
-          <Animatable.View animation="fadeInUp" style={styles.containerFormulario}>
+          <Animatable.View
+            animation="fadeInUp"
+            style={styles.containerFormulario}
+          >
             <Text style={styles.titulo}>Tipo</Text>
 
             <View style={styles.inputContainer1}>
@@ -100,7 +110,12 @@ export default function Register() {
             </View>
 
             <View style={styles.inputContainer}>
-              <FontAwesome name={"user"} size={30} color={"#ffff"} style={styles.inputIcon} />
+              <FontAwesome
+                name={"user"}
+                size={30}
+                color={"#ffff"}
+                style={styles.inputIcon}
+              />
               <TextInput
                 style={styles.textInput}
                 value={nome}
@@ -111,7 +126,12 @@ export default function Register() {
             </View>
 
             <View style={styles.inputContainer}>
-              <FontAwesome name={"envelope"} size={30} color={"#ffff"} style={styles.inputIcon} />
+              <FontAwesome
+                name={"envelope"}
+                size={30}
+                color={"#ffff"}
+                style={styles.inputIcon}
+              />
               <TextInput
                 style={styles.textInput}
                 value={cpf}
@@ -123,7 +143,12 @@ export default function Register() {
             </View>
 
             <View style={styles.inputContainer}>
-              <FontAwesome name={"phone"} size={30} color={"#ffff"} style={styles.inputIcon} />
+              <FontAwesome
+                name={"phone"}
+                size={30}
+                color={"#ffff"}
+                style={styles.inputIcon}
+              />
               <TextInput
                 style={styles.textInput}
                 value={telefone}
@@ -135,7 +160,12 @@ export default function Register() {
             </View>
 
             <View style={styles.inputContainer}>
-              <FontAwesome name={"user"} size={30} color={"#ffff"} style={styles.inputIcon} />
+              <FontAwesome
+                name={"user"}
+                size={30}
+                color={"#ffff"}
+                style={styles.inputIcon}
+              />
               <TextInput
                 style={styles.textInput}
                 value={email}
@@ -147,8 +177,15 @@ export default function Register() {
             </View>
 
             <View style={styles.rowContainer}>
-              <View style={[styles.inputContainer, { flex: 1, marginRight: 10 }]}>
-                <FontAwesome name={"lock"} size={30} color={"#ffff"} style={styles.inputIcon} />
+              <View
+                style={[styles.inputContainer, { flex: 1, marginRight: 10 }]}
+              >
+                <FontAwesome
+                  name={"lock"}
+                  size={30}
+                  color={"#ffff"}
+                  style={styles.inputIcon}
+                />
                 <TextInput
                   style={styles.textInput}
                   value={senha}
@@ -159,7 +196,9 @@ export default function Register() {
                 />
               </View>
 
-              <View style={[styles.inputContainer, { flex: 1, marginRight: 10 }]}>
+              <View
+                style={[styles.inputContainer, { flex: 1, marginRight: 10 }]}
+              >
                 <TextInput
                   style={styles.textInput}
                   value={confirmarSenha}
@@ -191,7 +230,7 @@ export default function Register() {
                     placeholderTextColor="rgba(255, 255, 255, 0.5)"
                     placeholder="Sua cidade ou bairro"
                   />
-                </View> 
+                </View>
 
                 <View style={styles.inputContainer}>
                   <TextInput
@@ -210,9 +249,13 @@ export default function Register() {
               <Text style={styles.textoBotaoCadastro}>Cadastrar</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.linkLogin} onPress={() => router.push("/auth/login")}>
+            <TouchableOpacity
+              style={styles.linkLogin}
+              onPress={() => router.push("/auth/login")}
+            >
               <Text style={styles.textoLogin}>
-                Já tem uma conta? <Text style={styles.linkLoginTexto}>Faça login</Text>
+                Já tem uma conta?{" "}
+                <Text style={styles.linkLoginTexto}>Faça login</Text>
               </Text>
             </TouchableOpacity>
           </Animatable.View>
@@ -225,7 +268,7 @@ export default function Register() {
 // Styles
 const styles = StyleSheet.create({
   rowContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginVertical: 10,
   },
   cabecalho: {
@@ -289,9 +332,9 @@ const styles = StyleSheet.create({
     elevation: 65,
 
     // iOS shadow
-    shadowColor: "#000",              
-    shadowOffset: { width: 0, height: 4 },  
-    shadowOpacity: 0.3,               
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
     shadowRadius: 6,
   },
   inputContainer1: {
@@ -306,9 +349,9 @@ const styles = StyleSheet.create({
     width: "50%",
 
     // iOS shadow
-    shadowColor: "#000",              
-    shadowOffset: { width: 0, height: 4 },  
-    shadowOpacity: 0.3,               
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
     shadowRadius: 6,
   },
   inputIcon: {
@@ -320,18 +363,18 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
   pickerContainer: {
-    backgroundColor: "rgba(38, 0, 0, 0.2)", 
-    borderRadius: 25, 
+    backgroundColor: "rgba(38, 0, 0, 0.2)",
+    borderRadius: 25,
     marginTop: 20,
     marginBottom: 20,
     paddingHorizontal: 15,
-    height: 60, 
+    height: 60,
     justifyContent: "center",
   },
   picker: {
-    color: "#fff", 
+    color: "#fff",
     fontSize: 18,
-    height: 40, 
+    height: 40,
     backgroundColor: "transparent",
   },
   pickerItem: {
