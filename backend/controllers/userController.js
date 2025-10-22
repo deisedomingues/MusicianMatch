@@ -80,11 +80,39 @@ export class UserController {
     }
   }
 
+  // async read(req, res) {
+  //   try {
+  //     const [usuarios] = await pool.query(
+  //       "SELECT cpf, nome, email, telefone, tipo FROM usuario"
+  //     );
+
+  //     if (usuarios.length === 0) {
+  //       return res.status(200).json({ message: "Nenhum usuário encontrado." });
+  //     }
+
+  //     return res.status(200).json(usuarios);
+  //   } catch (error) {
+  //     console.error("❌ Erro ao buscar usuários:", error);
+  //     return res.status(500).json({ message: "Erro interno no servidor." });
+  //   }
+  // }
+
   async read(req, res) {
     try {
-      const [usuarios] = await pool.query(
-        "SELECT cpf, nome, email, telefone, tipo FROM usuario"
-      );
+      const [usuarios] = await pool.query(`
+      SELECT 
+        u.cpf, 
+        u.nome, 
+        u.email, 
+        u.telefone, 
+        u.tipo,
+        m.instrumentos,
+        m.avaliacao,
+        m.localizacao,
+        m.descricao
+      FROM usuario u
+      LEFT JOIN musico m ON u.cpf = m.cpf_usuario
+    `);
 
       if (usuarios.length === 0) {
         return res.status(200).json({ message: "Nenhum usuário encontrado." });

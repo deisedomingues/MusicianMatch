@@ -44,8 +44,12 @@ export default function Home() {
     api
       .get("/users")
       .then((response) => {
-        setUsersList(response.data);
-        setFilteredUsers(response.data);
+        const onlyMusicians = response.data.filter(
+          (user) => user.tipo === "musico"
+        );
+
+        setUsersList(onlyMusicians);
+        setFilteredUsers(onlyMusicians);
       })
       .catch((error) => console.error("Erro ao obter dados:", error));
   }, []);
@@ -63,6 +67,10 @@ export default function Home() {
       );
       setFilteredUsers(filtered);
     }
+  };
+
+  const logout = () => {
+    router.replace("/auth/login");
   };
 
   const handleEdit = () => router.push("/telas/editProfile");
@@ -91,8 +99,8 @@ export default function Home() {
         <View style={{ flex: 1 }}>
           <Text style={styles.username}>{user.nome}</Text>
         </View>
-        <TouchableOpacity>
-          <Ionicons name="notifications-outline" size={26} color="#fff" />
+        <TouchableOpacity onPress={logout}>
+          <Ionicons name="exit-outline" size={26} color="#f70707" />
         </TouchableOpacity>
       </View>
 
@@ -122,8 +130,23 @@ export default function Home() {
         {filteredUsers.length > 0 ? (
           filteredUsers.map((item, index) => (
             <View key={index} style={styles.card}>
-              <Text style={styles.cardTitle}>{item.nome}</Text>
-              <Text style={styles.cardText}>{item.email}</Text>
+              <View style={styles.avatar}>
+                <Image
+                  source={{
+                    uri: `https://avatar.iran.liara.run/username?username=${item.nome}`,
+                  }}
+                  style={styles.avatarImage}
+                />
+                <Text style={styles.cardTitle}>{item.nome}</Text>
+              </View>
+              <Text style={styles.cardText}>email: {item.email}</Text>
+              <Text style={styles.cardText}>telefone: {item.telefone}</Text>
+              <Text style={styles.cardText}>
+                instrumentos: {item.instrumentos}
+              </Text>
+              <Text style={styles.cardText}>
+                localização: {item.localizacao}
+              </Text>
             </View>
           ))
         ) : (
@@ -198,8 +221,8 @@ const styles = StyleSheet.create({
     flexGrow: 0,
   },
   card: {
-    width: 150,
-    height: 180,
+    width: 300,
+    height: 250,
     backgroundColor: "rgba(255,255,255,0.1)",
     borderRadius: 16,
     padding: 15,
@@ -229,5 +252,17 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 6,
     elevation: 8,
+  },
+  avatar: {
+    marginRight: 15,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 10,
+  },
+  avatarImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
   },
 });
