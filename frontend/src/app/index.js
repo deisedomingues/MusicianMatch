@@ -1,7 +1,15 @@
-import { View, StyleSheet, Text, TouchableOpacity } from "react-native";
+import {
+  View,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  ImageBackground,
+} from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React from "react";
 import * as Animatable from "react-native-animatable";
+import backgroundSplash from "./assets/background-splash.png";
 
 export default function Index() {
   function Login() {
@@ -9,83 +17,99 @@ export default function Index() {
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.containerLogo}>
-        <Animatable.Image
-          animation="flipInY"
-          source={require("./assets/logo.png")}
-          style={{ width: "100%" }}
-          resizeMode="contain"
-        />
-      </View>
-      <Animatable.View
-        delay={600}
-        animation="fadeInUp"
-        style={styles.containerForm}
-      >
-        <Text style={styles.title}>
-          Onde a música encontra a parceria ideal!
-        </Text>
-        <Text style={styles.text}>Faça o login para começar</Text>
+    <View style={styles.containerBackground}>
+      <View style={styles.container}>
+        <ImageBackground source={backgroundSplash} style={styles.image}>
+          <Animatable.View
+            delay={300}
+            animation="fadeInUp"
+            style={styles.containerForm}
+          >
+            <LinearGradient
+              colors={[
+                "rgba(43, 43, 43, 0.07)",
+                "rgba(32, 32, 32, 0.95)",
+                "rgba(0, 0, 0, 1)",
+              ]}
+              style={{ flex: 1, padding: "5%", paddingBottom: 32 }}
+            >
+              <Text style={styles.title}>Encontre o</Text>
+              <Text style={styles.title_bold}>musicista perfeito.</Text>
+              <Text style={styles.text}>
+                Seja para contratar os melhores talentos para seu evento ou para
+                você, músico, conquistar novos palcos.
+              </Text>
 
-        <TouchableOpacity
-          activeOpacity={0.7}
-          style={styles.button}
-          onPress={Login}
-        >
-          <Text style={styles.label}>Acessar</Text>
-        </TouchableOpacity>
-      </Animatable.View>
+              <TouchableOpacity
+                activeOpacity={0.7}
+                style={styles.button}
+                onPress={Login}
+              >
+                <Text style={styles.label}>Acessar</Text>
+              </TouchableOpacity>
+            </LinearGradient>
+          </Animatable.View>
+        </ImageBackground>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  containerBackground: {
     flex: 1,
-    backgroundColor: "#871F78",
-  },
-  containerLogo: {
-    flex: 2,
+    width: "100%",
+    backgroundColor: "#141414ff",
     justifyContent: "center",
     alignItems: "center",
   },
+  container: {
+    flex: 1,
+    width: "100%",
+    maxWidth: "375px",
+  },
+  image: {
+    flex: 1,
+    width: "100%",
+    height: "110%",
+    resizeMode: "cover",
+    justifyContent: "flex-end",
+  },
+
   containerForm: {
     flex: 1,
-    backgroundColor: "#fff",
-    borderTopLeftRadius: 25,
-    borderTopRightRadius: 25,
-    paddingStart: "5%",
-    paddingEnd: "5%",
+    maxHeight: 400,
+    position: "absolute",
+    bottom: 0,
   },
   title: {
-    fontSize: 24,
-    fontWeight: "bold",
+    color: "#fff",
+    fontSize: 35,
+    fontWeight: "regular",
     marginTop: 28,
+  },
+  title_bold: {
+    color: "#fff",
+    fontSize: 35,
+    fontWeight: "bold",
     marginBottom: 12,
   },
   text: {
     color: "#a1a1a1",
+    fontSize: 18,
   },
   label: {
-    fontSize: 16,
-    fontWeight: "bold",
     color: "#fff",
+    fontSize: 18,
+    fontWeight: "normal",
   },
   button: {
-    position: "absolute",
-    backgroundColor: "#871F78",
-    paddingVertical: 8,
-    borderRadius: 50,
-    width: "60%",
-    alignSelf: "center",
-    bottom: "15%",
+    backgroundColor: "#8F16A7",
+    borderRadius: 4,
+    width: "100%",
+    height: 48,
+    marginTop: 24,
     alignItems: "center",
     justifyContent: "center",
-  },
-  acessar: {
-    fontSize: 18,
-    color: "#fff",
-    fontWeight: "bold",
   },
 });

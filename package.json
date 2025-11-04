@@ -9,7 +9,6 @@
     "web": "expo start --web"
   },
   "dependencies": {
-    "expo-router": "^3.x.x",
     "expo": "~52.0.38",
     "expo-constants": "~17.0.8",
     "expo-linear-gradient": "^14.0.2",

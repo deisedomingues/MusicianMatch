@@ -1,17 +1,19 @@
 import { router, useLocalSearchParams } from "expo-router";
 import {
   View,
-  SafeAreaView,
-  StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
+  StyleSheet,
+  TextInput,
+  Image,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
 } from "react-native";
 import * as Animatable from "react-native-animatable";
 import { useState } from "react";
-import { FontAwesome } from "@expo/vector-icons";
 import api from "../api/api";
-import { LinearGradient } from "expo-linear-gradient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function Login() {
@@ -55,7 +57,11 @@ export default function Login() {
       await AsyncStorage.setItem("userToken", token);
       await AsyncStorage.setItem("userData", JSON.stringify(usuario));
 
-      router.replace("/(tabs)/home");
+      if (usuario.tipo === "musico") {
+        router.replace("/(tabs-musician)/home");
+      } else {
+        router.replace("/(tabs-contractor)/home");
+      }
     } catch (error) {
       console.error(error);
       alert("Erro no login. Verifique seus dados e tente novamente.");
@@ -65,231 +71,147 @@ export default function Login() {
   };
 
   return (
-    <LinearGradient
-      colors={["#1E1E1E", "#473CA6", "#2F253E"]}
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={{ flex: 1 }}
     >
-      <SafeAreaView style={{ flex: 1 }}>
-        <Animatable.View
-          animation="fadeInLeft"
-          delay={500}
-          style={styles.cabecalho}
-        >
-          <Text style={styles.logo}>Musician&Match</Text>
-        </Animatable.View>
-
-        <Animatable.View animation="fadeInUp" style={styles.areaFormulario}>
-          <View style={styles.inputContainer}>
-            <FontAwesome
-              name={"at"}
-              size={30}
-              color={"#ffff"}
-              style={styles.inputIcon}
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.container}>
+          <Animatable.View animation="fadeInDown" style={styles.header}>
+            <Image
+              source={require("../assets/logo.png")}
+              style={styles.logo}
+              resizeMode="contain"
             />
+          </Animatable.View>
+
+          <Animatable.View animation="fadeInUp" delay={300} style={styles.form}>
+            <Text style={styles.title}>Acessar plataforma</Text>
+            <Text style={styles.subtitle}>
+              Encontre sua banda. Encontre sua parceria.
+            </Text>
+
             <TextInput
-              style={styles.textInput}
-              placeholder="E-mail"
-              placeholderTextColor="#FFFFFF80"
+              style={styles.input}
+              placeholder="Email"
+              placeholderTextColor="#B0B0B0"
+              keyboardType="email-address"
               value={email}
               onChangeText={setEmail}
-              keyboardType="email-address"
-            />
-          </View>
-
-          <View style={styles.inputContainer}>
-            <FontAwesome
-              name={"lock"}
-              size={30}
-              color={"#ffff"}
-              style={styles.inputIcon}
             />
             <TextInput
-              style={styles.textInput}
+              style={styles.input}
               placeholder="Senha"
-              value={senha}
-              placeholderTextColor="rgba(255, 255, 255, 0.5)"
-              onChangeText={setSenha}
+              placeholderTextColor="#B0B0B0"
               secureTextEntry
+              value={senha}
+              onChangeText={setSenha}
             />
-          </View>
 
-          <Text style={styles.textoEsqueceuSenha} onPress={recuperarSenha}>
-            Esqueceu sua senha?
-          </Text>
+            {erro ? <Text style={styles.error}>{erro}</Text> : null}
 
-          {erro !== "" && (
-            <Text
-              style={{ color: "red", textAlign: "center", marginBottom: 10 }}
+            <View style={styles.registerContainer}>
+              <Text style={styles.registerText}>Não tem uma conta? </Text>
+              <TouchableOpacity onPress={() => router.push("/auth/register")}>
+                <Text style={styles.registerLink}>Cadastrar →</Text>
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              style={styles.button}
+              onPress={enviaLogin}
+              disabled={loading}
             >
-              {erro}
-            </Text>
-          )}
-
-          <TouchableOpacity style={styles.botaoLogin} onPress={enviaLogin}>
-            <Text style={styles.textoBotaoLogin}>
-              {loading ? "Acessando..." : "Acessar"}
-            </Text>
-          </TouchableOpacity>
-
-          <View style={styles.divisorContainer}>
-            <View style={styles.bolinha} />
-            <View style={styles.linha} />
-            <View style={styles.bolinha} />
-          </View>
-
-          <TouchableOpacity style={styles.botaoGoogle}>
-            <FontAwesome name="google" size={30} color="#fff" />
-            <Text style={styles.textoBotaoGoogle}>Acessar com Google</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.botaoCadastro}
-            onPress={() => router.push("/auth/register")}
-          >
-            <Text style={styles.textoCadastro}>
-              Não possui uma conta?{" "}
-              <Text style={styles.textoCadastreSe}>Cadastre-se</Text>
-            </Text>
-          </TouchableOpacity>
-        </Animatable.View>
-
-        <TouchableOpacity style={styles.botaoVoltar} onPress={voltar}>
-          <Text>{name}</Text>
-          <Text style={styles.textoBotaoVoltar}>Voltar</Text>
-        </TouchableOpacity>
-      </SafeAreaView>
-    </LinearGradient>
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.buttonText}>Entrar</Text>
+              )}
+            </TouchableOpacity>
+          </Animatable.View>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  cabecalho: {
-    marginTop: "14%",
-    marginBottom: "8%",
+  container: {
+    flex: 1,
+    backgroundColor: "#121212",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
+  scrollContainer: {
+    flexGrow: 1,
+  },
+  header: {
+    marginBottom: 30,
+    alignItems: "center",
   },
   logo: {
-    fontSize: 40,
-    fontWeight: "bold",
-    color: "#fff",
-    textAlign: "center",
-    marginBottom: 50,
+    width: 220,
+    height: 80,
   },
-  areaFormulario: {
-    flex: 2,
-    borderTopLeftRadius: 25,
-    borderTopRightRadius: 25,
-    paddingStart: "8%",
-    paddingEnd: "8%",
-    paddingHorizontal: "8%",
-  },
-  botaoLogin: {
-    backgroundColor: "#fff",
+  form: {
     width: "100%",
-    borderRadius: 25,
-    paddingVertical: 15,
-    marginTop: 14,
-    justifyContent: "center",
-    alignItems: "center",
-    elevation: 5,
+    backgroundColor: "#1C1C1E",
+    borderRadius: 10,
+    padding: 25,
   },
-  textoBotaoLogin: {
-    color: "#463BA2",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  botaoGoogle: {
-    backgroundColor: "transparent",
-    width: "100%",
-    borderWidth: 1,
-    borderRadius: 25,
-    borderColor: "#fff",
-    paddingVertical: 15,
-    marginTop: 14,
-    alignItems: "center",
-    justifyContent: "center",
-    flexDirection: "row",
-  },
-  textoBotaoGoogle: {
+  title: {
+    fontSize: 20,
     color: "#fff",
-    fontSize: 18,
     fontWeight: "bold",
-    marginLeft: 60,
+    marginBottom: 6,
   },
-  botaoVoltar: {
-    backgroundColor: "#fff",
-    width: "25%",
-    borderRadius: 15,
-    paddingVertical: 8,
-    marginTop: 14,
-    marginBottom: 14,
-    marginLeft: 14,
-    justifyContent: "center",
-    alignItems: "center",
-    flexDirection: "row",
-  },
-  textoBotaoVoltar: {
-    color: "#871F78",
-    fontSize: 18,
-    fontWeight: "bold",
-    marginRight: 8,
-  },
-  botaoCadastro: {
-    marginTop: 14,
-    alignSelf: "center",
-  },
-  textoCadastro: {
-    color: "#c3c3c3",
-    fontWeight: "bold",
-  },
-  textoCadastreSe: {
-    color: "#fff",
-  },
-  textoEsqueceuSenha: {
-    color: "#c3c3c3",
+  subtitle: {
+    color: "#B0B0B0",
     fontSize: 14,
+    marginBottom: 25,
+  },
+  input: {
+    backgroundColor: "#2A2A2A",
+    borderRadius: 6,
+    padding: 12,
+    color: "#fff",
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: "#3E3E3E",
+  },
+  button: {
+    backgroundColor: "#871F78",
+    borderRadius: 6,
+    paddingVertical: 14,
+    alignItems: "center",
+    marginTop: 20,
+  },
+  buttonText: {
+    color: "#fff",
     fontWeight: "bold",
-    marginStart: "8%",
+    fontSize: 16,
   },
-  inputContainer: {
-    backgroundColor: "rgba(38, 0, 0, 0.2)",
+  error: {
+    color: "#ff4d4d",
+    textAlign: "center",
+    marginBottom: 10,
+  },
+  registerContainer: {
     flexDirection: "row",
-    borderRadius: 25,
-    marginVertical: 10,
-    paddingHorizontal: 20,
-    alignItems: "center",
-    height: 60,
-    elevation: 65,
-    width: "100%",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-  },
-  inputIcon: {
-    marginLeft: 15,
-  },
-  textInput: {
-    flex: 1,
-    paddingLeft: 15,
-    color: "#fff", // Texto de email e senha alterados para branco
-  },
-  bolinha: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: "#fff",
-  },
-  linha: {
-    flex: 1,
-    height: 1,
-    backgroundColor: "#fff",
-    opacity: 0.4,
-  },
-  divisorContainer: {
-    flexDirection: "row",
-    alignItems: "center",
     justifyContent: "center",
-    width: "100%",
-    marginVertical: 20,
+    marginTop: 10,
+  },
+  registerText: {
+    color: "#B0B0B0",
+    fontSize: 14,
+  },
+  registerLink: {
+    color: "#A060FF",
+    fontWeight: "bold",
+    fontSize: 14,
   },
 });

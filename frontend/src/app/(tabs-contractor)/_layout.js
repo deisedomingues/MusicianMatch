@@ -1,17 +1,13 @@
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
-export default function TabsLayout() {
+export default function Layout() {
   return (
     <Tabs
       screenOptions={{
-        headerShown: false, // esconde o topo
-        tabBarShowLabel: true, // oculta os nomes
+        headerShown: false,
+        tabBarShowLabel: true,
         tabBarStyle: {
-          // position: "absolute",
-          // bottom: 15,
-          // left: 20,
-          // right: 20,
           backgroundColor: "#1C0633",
           height: 60,
           borderTopWidth: 0,
@@ -25,7 +21,7 @@ export default function TabsLayout() {
         name="home"
         options={{
           title: "Início",
-          tabBarIcon: ({ color, focused, size }) => (
+          tabBarIcon: ({ color, size }) => (
             <Ionicons name="home" color={color} size={size} />
           ),
         }}
@@ -34,7 +30,7 @@ export default function TabsLayout() {
         name="messages"
         options={{
           title: "Mensagens",
-          tabBarIcon: ({ color, size = 24 }) => (
+          tabBarIcon: ({ color, size }) => (
             <Ionicons name="chatbubbles" color={color} size={size} />
           ),
         }}
@@ -43,7 +39,7 @@ export default function TabsLayout() {
         name="editProfile"
         options={{
           title: "Perfil",
-          tabBarIcon: ({ color, size = 24 }) => (
+          tabBarIcon: ({ color, size }) => (
             <Ionicons name="person" color={color} size={size} />
           ),
         }}
