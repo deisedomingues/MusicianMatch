@@ -6,6 +6,7 @@ import {
   Image,
   ScrollView,
   TextInput,
+  Alert,
 } from "react-native";
 import { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -47,7 +48,6 @@ export default function Home() {
         const onlyMusicians = response.data.filter(
           (user) => user.tipo === "musico"
         );
-
         setUsersList(onlyMusicians);
         setFilteredUsers(onlyMusicians);
       })
@@ -74,6 +74,14 @@ export default function Home() {
   };
 
   const handleEdit = () => router.push("/telas/editProfile");
+
+  // >>>>>>>>>> ALTERADO AQUI <<<<<<<<<<
+  const contratarMusico = (cpfMusico) => {
+    if (!user) return Alert.alert("Erro", "Usuário não autenticado.");
+    // Redireciona para a tela de contratação passando o CPF do músico na URL
+    router.push(`/(tabs-contractor)/contratar?cpf=${cpfMusico}`);
+  };
+  // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
   if (loading || !user) {
     return (
@@ -147,6 +155,14 @@ export default function Home() {
               <Text style={styles.cardText}>
                 localização: {item.localizacao}
               </Text>
+
+              {/* Botão Contratar */}
+              <TouchableOpacity
+                style={styles.buttonContratar}
+                onPress={() => contratarMusico(item.cpf)}
+              >
+                <Text style={styles.buttonText}>Contratar</Text>
+              </TouchableOpacity>
             </View>
           ))
         ) : (
@@ -165,31 +181,21 @@ export default function Home() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-  },
+  container: { flex: 1, padding: 20 },
   loadingContainer: {
     flex: 1,
     backgroundColor: "#1E1E1E",
     justifyContent: "center",
     alignItems: "center",
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 25,
-  },
+  header: { flexDirection: "row", alignItems: "center", marginBottom: 25 },
   profileIcon: {
     width: 45,
     height: 45,
     borderRadius: 25,
     marginRight: 10,
   },
-  username: {
-    color: "#fff",
-    fontSize: 16,
-  },
+  username: { color: "#fff", fontSize: 16 },
   greeting: {
     color: "#fff",
     fontSize: 26,
@@ -206,38 +212,33 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 25,
   },
-  searchInput: {
-    flex: 1,
-    color: "#fff",
-    marginHorizontal: 10,
-  },
+  searchInput: { flex: 1, color: "#fff", marginHorizontal: 10 },
   sectionTitle: {
     color: "#fff",
     fontSize: 18,
     fontWeight: "600",
     marginBottom: 10,
   },
-  recommendations: {
-    flexGrow: 0,
-  },
+  recommendations: { flexGrow: 0 },
   card: {
     width: 300,
-    height: 250,
+    height: 270,
     backgroundColor: "rgba(255,255,255,0.1)",
     borderRadius: 16,
     padding: 15,
     marginRight: 15,
     justifyContent: "center",
   },
-  cardTitle: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
+  cardTitle: { color: "#fff", fontSize: 16, fontWeight: "bold" },
+  cardText: { color: "#ccc", fontSize: 12, marginBottom: 2 },
+  buttonContratar: {
+    marginTop: 10,
+    backgroundColor: "#5D3FD3",
+    borderRadius: 8,
+    paddingVertical: 8,
+    alignItems: "center",
   },
-  cardText: {
-    color: "#ccc",
-    fontSize: 12,
-  },
+  buttonText: { color: "#fff", fontWeight: "bold" },
   floatingButton: {
     position: "absolute",
     bottom: 30,
@@ -260,9 +261,5 @@ const styles = StyleSheet.create({
     gap: 10,
     marginBottom: 10,
   },
-  avatarImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-  },
+  avatarImage: { width: 50, height: 50, borderRadius: 25 },
 });

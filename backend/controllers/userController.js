@@ -65,7 +65,7 @@ export class UserController {
 
       if (tipo === "musico") {
         await pool.query(
-          `INSERT INTO Musico (cpf_usuario, instrumentos, localizacao, descricao, avaliacao)
+          `INSERT INTO musico (cpf_usuario, instrumentos, localizacao, descricao, avaliacao)
         VALUES (?, ?, ?, ?, 0.00)`,
           [cpf, instrumentos.trim(), localizacao.trim(), descricao.trim()]
         );

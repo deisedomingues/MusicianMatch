@@ -1,18 +1,23 @@
+// backend/index.js
 import express from "express";
-import routes from "./routes/index.js";
 import cors from "cors";
+import routes from "./routes/index.js";
+import pool from "./database/connection.js";
 
 const app = express();
-const port = 3000;
+const PORT = 3000;
 
-const corsOptions = {
-  origin: "*",
-};
-
+// middlewares
+app.use(cors());
 app.use(express.json());
-app.use(cors(corsOptions));
+
+// testar conexão com banco
+pool.getConnection()
+  .then(() => console.log("✅ Conectado ao MySQL com sucesso!"))
+  .catch(err => console.error("❌ Erro ao conectar ao MySQL:", err));
+
+// usar as rotas centralizadas
 app.use(routes);
 
-app.listen(port, "0.0.0.0", () => {
-  console.log(`Servidor rodando na porta http://localhost:${port}`);
-});
+// iniciar servidor
+app.listen(PORT, () => console.log(`🚀 Servidor rodando na porta ${PORT}`));
