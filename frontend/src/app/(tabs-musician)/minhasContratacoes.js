@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -7,114 +7,111 @@ import {
   FlatList,
   ActivityIndicator,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { router } from "expo-router";
 import api from "../api/api";
-import { useRouter, useFocusEffect } from "expo-router";
-import formatDate from "../utils/dateformat";
+import Toast from "react-native-toast-message";
 
-export default function MinhasContratacoesMusico() {
-  const [user, setUser] = useState(null);
+export default function MinhasContratacoes() {
   const [contratacoes, setContratacoes] = useState([]);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
+  const [usuario, setUsuario] = useState(null);
 
-  const carregarContratacoes = async () => {
-    setLoading(true);
-    const st = await AsyncStorage.getItem("userData");
-    if (!st) return router.replace("/auth/login");
+  useEffect(() => {
+    async function carregarContratacoes() {
+      try {
+        const userDataString = await AsyncStorage.getItem("userData");
+        if (!userDataString) {
+          Toast.show({
+            type: "error",
+            text1: "Erro",
+            text2: "Usuário não encontrado. Faça login novamente.",
+            position: "top",
+          });
+          return;
+        }
+        const userData = JSON.parse(userDataString);
+        setUsuario(userData);
 
-    const u = JSON.parse(st);
-    setUser(u);
+        // busca contratações onde o usuário logado é o CONTRATANTE
+        const response = await api.get("/contratacoes");
+        const todasContratacoes = response.data;
 
-    try {
-      const { data } = await api.get(`/contratacoes`);
-      // Aqui o músico é o contratado
-      const minhas = data.filter((c) => c.cpf_musico === u.cpf);
-      setContratacoes(minhas);
-    } catch (err) {
-      console.error("Erro ao carregar contratações:", err);
-    } finally {
-      setLoading(false);
+        const minhas = todasContratacoes.filter(
+          (c) => c.cpf_contratante === userData.cpf
+        );
+
+        setContratacoes(minhas);
+      } catch (error) {
+        console.error("Erro ao carregar contratações:", error);
+        Toast.show({
+          type: "error",
+          text1: "Erro",
+          text2: "Não foi possível carregar contratações.",
+          position: "top",
+        });
+      } finally {
+        setLoading(false);
+      }
     }
-  };
 
-  useFocusEffect(
-    useCallback(() => {
-      carregarContratacoes();
-    }, [])
-  );
+    carregarContratacoes();
+  }, []);
 
-  if (loading)
+  function renderItem({ item }) {
     return (
-      <View style={styles.loading}>
-        <ActivityIndicator color="#fff" size="large" />
+      <View style={styles.card}>
+        <Text style={styles.nome}>{item.nome_musico}</Text>
+        <Text style={styles.info}>Instrumentos: {item.instrumentos}</Text>
+        <Text style={styles.info}>Data: {item.data_evento}</Text>
+        <Text style={styles.info}>Horário: {item.horario}</Text>
+        <Text style={styles.info}>Local: {item.localizacao}</Text>
+        <Text style={styles.status}>Status: {item.status}</Text>
+
+        {/* Só mostra botão de avaliar se usuário é contratante e status finalizado */}
+        {usuario &&
+          item.cpf_contratante === usuario.cpf &&
+          item.status === "finalizado" && (
+            <TouchableOpacity
+              style={styles.botaoAvaliar}
+              onPress={() =>
+                router.push({
+                  pathname: "/tabs-musician/avaliarMusico",
+                  params: { cpfMusico: item.cpf_musico },
+                })
+              }
+            >
+              <Text style={styles.textoBotao}>Avaliar Músico</Text>
+            </TouchableOpacity>
+          )}
       </View>
     );
+  }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Minhas Contratações</Text>
-      <Text style={{ color: "#ccc", marginBottom: 12 }}>
-        Aqui fica os contratos solicitados por você, como o Contratante.
-      </Text>
+      {/* Botão Home */}
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => router.push("/tabs-musician/home")}
+      >
+        <Ionicons name="home" size={20} color="#fff" />
+        <Text style={styles.backText}>Início</Text>
+      </TouchableOpacity>
 
-      {contratacoes.length === 0 ? (
-        <Text style={styles.empty}>Você ainda não recebeu contratações.</Text>
+      <Text style={styles.titulo}>Minhas Contratações</Text>
+
+      {loading ? (
+        <ActivityIndicator size="large" color="#A020F0" />
+      ) : contratacoes.length === 0 ? (
+        <Text style={styles.info}>Você não possui contratações.</Text>
       ) : (
         <FlatList
           data={contratacoes}
-          keyExtractor={(item) => String(item.id)}
-          renderItem={({ item }) => (
-            <View style={styles.card}>
-              <Text style={styles.label}>Prestador(a)</Text>
-              <Text style={styles.value}>
-                {item.nome_contratante || item.cpf_contratante}
-              </Text>
-
-              <Text style={styles.label}>Data</Text>
-              <Text style={styles.value}>
-                {formatDate(item.data_evento) || "—"}
-              </Text>
-
-              <Text style={styles.label}>Local</Text>
-              <Text style={styles.value}>{item.localizacao || "—"}</Text>
-
-              <Text style={styles.label}>Status</Text>
-              <Text
-                style={[
-                  styles.value,
-                  {
-                    color:
-                      item.status === "confirmado"
-                        ? "#0B8A1F"
-                        : item.status === "cancelado"
-                        ? "#B81D1D"
-                        : "#C9A000",
-                  },
-                ]}
-              >
-                {item.status}
-              </Text>
-
-              {/* BOTÃO AVALIAR — aparece só quando está confirmado */}
-              {item.status === "confirmado" && (
-                <TouchableOpacity
-                  style={styles.button}
-                  onPress={() =>
-                    router.push({
-                      pathname: "/(tabs-musician)/avaliarMusico",
-                      params: {
-                        cpf_contratante: item.cpf_contratante,
-                        cpf_musico: item.cpf_musico,
-                      },
-                    })
-                  }
-                >
-                  <Text style={styles.buttonText}>Avaliar</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          )}
+          keyExtractor={(item, index) => index.toString()}
+          renderItem={renderItem}
+          contentContainerStyle={{ paddingBottom: 20 }}
         />
       )}
     </View>
@@ -122,32 +119,37 @@ export default function MinhasContratacoesMusico() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#1A181D", padding: 16 },
-  loading: { flex: 1, justifyContent: "center", alignItems: "center" },
-  title: { color: "#fff", fontSize: 22, fontWeight: "bold", marginBottom: 12 },
-  empty: { color: "#aaa", marginTop: 20, textAlign: "center" },
-
-  card: {
-    backgroundColor: "#1E1E2A",
-    padding: 14,
-    borderRadius: 12,
-    marginBottom: 14,
-  },
-
-  label: { color: "#A0A0A0", fontSize: 12, marginTop: 6 },
-  value: { color: "#fff", fontSize: 16 },
-
-  button: {
-    backgroundColor: "#6C63FF",
-    marginTop: 12,
-    paddingVertical: 10,
-    borderRadius: 8,
+  container: { flex: 1, backgroundColor: "#0d0d0d", padding: 20 },
+  backButton: {
+    flexDirection: "row",
     alignItems: "center",
+    marginBottom: 10,
+    width: 100,
   },
-
-  buttonText: {
+  backText: { color: "#fff", marginLeft: 10, fontSize: 16 },
+  titulo: {
+    fontSize: 24,
     color: "#fff",
     fontWeight: "bold",
-    fontSize: 16,
+    marginBottom: 20,
   },
+  card: {
+    backgroundColor: "#1c1c1c",
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: "#333",
+  },
+  nome: { color: "#fff", fontSize: 18, fontWeight: "bold", marginBottom: 5 },
+  info: { color: "#aaa", fontSize: 14, marginBottom: 3 },
+  status: { color: "#fff", fontSize: 14, marginTop: 5 },
+  botaoAvaliar: {
+    backgroundColor: "#A020F0",
+    padding: 10,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 10,
+  },
+  textoBotao: { color: "#fff", fontWeight: "bold" },
 });

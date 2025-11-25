@@ -19,7 +19,6 @@ export class UserController {
     } = req.body;
 
     try {
-      // 🔍 Validações básicas
       if (!nome || !email || !telefone || !senha || !cpf || !tipo) {
         return res
           .status(400)
@@ -42,7 +41,6 @@ export class UserController {
         return res.status(400).json({ message: "Tipo de usuário inválido." });
       }
 
-      // 🔐 Verifica se já existe usuário com mesmo CPF ou email
       const [usuariosExistentes] = await pool.query(
         "SELECT cpf, email FROM usuario WHERE email = ? OR cpf = ?",
         [email, cpf]
@@ -54,7 +52,6 @@ export class UserController {
         return res.status(409).json({ message: `${conflito} já cadastrado.` });
       }
 
-      // 🔒 Criptografa a senha
       const hashSenha = await bcrypt.hash(senha, 12);
 
       await pool.query(
@@ -80,35 +77,32 @@ export class UserController {
     }
   }
 
- async getByCpf(req, res) {
+  async getByCpf(req, res) {
     const { cpf } = req.params;
     try {
-      // 2. Query SQL para selecionar um usuário específico pelo CPF
       const [usuarios] = await pool.query(
         `
-            SELECT 
-                u.cpf, 
-                u.nome, 
-                u.email, 
-                u.telefone, 
-                u.tipo,
-                m.instrumentos,
-                m.avaliacao,
-                m.localizacao,
-                m.descricao
-            FROM usuario u
-            LEFT JOIN musico m ON u.cpf = m.cpf_usuario
-            WHERE u.cpf = ?  /* <--- Adição da cláusula WHERE e uso de '?' para segurança */
+        SELECT 
+          u.cpf, 
+          u.nome, 
+          u.email, 
+          u.telefone, 
+          u.tipo,
+          m.instrumentos,
+          m.avaliacao,
+          m.localizacao,
+          m.descricao
+        FROM usuario u
+        LEFT JOIN musico m ON u.cpf = m.cpf_usuario
+        WHERE u.cpf = ?
         `,
         [cpf]
       );
       const user = usuarios[0];
       if (!user) {
-        // Nenhum usuário com o CPF fornecido foi encontrado
         return res.status(404).json({ message: "Usuário não encontrado." });
       }
 
-      // 4. Retorna o único usuário encontrado
       return res.status(200).json(user);
     } catch (error) {
       console.error(`❌ Erro ao buscar usuário com CPF ${cpf}:`, error);
@@ -116,31 +110,37 @@ export class UserController {
     }
   }
 
-
   async read(req, res) {
     try {
-      const [usuarios] = await pool.query(`
-      SELECT 
-        u.cpf, 
-        u.nome, 
-        u.email, 
-        u.telefone, 
-        u.tipo,
-        m.instrumentos,
-        m.avaliacao,
-        m.localizacao,
-        m.descricao
-      FROM usuario u
-      LEFT JOIN musico m ON u.cpf = m.cpf_usuario
-    `);
+      const cpfLogado = req.user?.cpf;
 
-      if (usuarios.length === 0) {
-        return res.status(200).json({ message: "Nenhum usuário encontrado." });
+      const [usuarios] = await pool.query(`
+        SELECT 
+          u.cpf, 
+          u.nome, 
+          u.email, 
+          u.telefone, 
+          u.tipo,
+          m.instrumentos,
+          m.avaliacao,
+          m.localizacao,
+          m.descricao
+        FROM usuario u
+        LEFT JOIN musico m ON u.cpf = m.cpf_usuario
+        WHERE u.tipo = 'musico'
+      `);
+
+      const listaFiltrada = cpfLogado
+        ? usuarios.filter((u) => u.cpf !== cpfLogado)
+        : usuarios;
+
+      if (listaFiltrada.length === 0) {
+        return res.status(200).json({ message: "Nenhum músico encontrado." });
       }
 
-      return res.status(200).json(usuarios);
+      return res.status(200).json(listaFiltrada);
     } catch (error) {
-      console.error("❌ Erro ao buscar usuários:", error);
+      console.error("❌ Erro ao buscar músicos:", error);
       return res.status(500).json({ message: "Erro interno no servidor." });
     }
   }
@@ -155,7 +155,6 @@ export class UserController {
     }
 
     try {
-      // 🔎 Busca usuário pelo e-mail
       const [rows] = await pool.query("SELECT * FROM usuario WHERE email = ?", [
         email,
       ]);
@@ -166,13 +165,11 @@ export class UserController {
 
       const usuario = rows[0];
 
-      // 🔐 Compara a senha informada com o hash no banco
       const senhaCorreta = await bcrypt.compare(senha, usuario.senha);
       if (!senhaCorreta) {
         return res.status(401).json({ message: "Senha incorreta." });
       }
 
-      // Cria o token JWT
       const token = jwt.sign(
         {
           cpf: usuario.cpf,
@@ -181,10 +178,9 @@ export class UserController {
           tipo: usuario.tipo,
         },
         JWT_SECRET,
-        { expiresIn: "8h" } // o token expira em 8 horas
+        { expiresIn: "8h" }
       );
 
-      // 🧹 Remove a senha do retorno
       const { senha: _, ...dadoDoUsuario } = usuario;
 
       return res.status(200).json({
@@ -203,7 +199,6 @@ export class UserController {
     const { cpf } = req.user;
 
     try {
-      // 🔍 Verifica se o usuário existe
       const [rows] = await pool.query("SELECT * FROM usuario WHERE cpf = ?", [
         cpf,
       ]);
@@ -211,7 +206,6 @@ export class UserController {
         return res.status(404).json({ message: "Usuário não encontrado." });
       }
 
-      // 🔐 Se senha foi enviada, criptografa
       let novaSenha = rows[0].senha;
       if (senha) {
         if (senha.length < 6) {
@@ -222,7 +216,6 @@ export class UserController {
         novaSenha = await bcrypt.hash(senha, 10);
       }
 
-      // 🧩 Monta os campos para update (só atualiza o que foi enviado)
       const campos = [];
       const valores = [];
 
@@ -245,23 +238,19 @@ export class UserController {
           .json({ message: "Nenhum campo para atualizar." });
       }
 
-      valores.push(cpf); // último valor para o WHERE
+      valores.push(cpf);
 
-      // 🧱 Executa o update
       await pool.query(
         `UPDATE usuario SET ${campos.join(", ")} WHERE cpf = ?`,
         valores
       );
 
-      // Faz uma nova consulta para obter o objeto completo e atualizado
       const [updatedRows] = await pool.query(
         "SELECT * FROM usuario WHERE cpf = ?",
         [cpf]
       );
 
       const usuarioAtualizado = updatedRows[0];
-
-      // Remove a senha do objeto antes de enviar
       const { senha: _, ...dadoDoUsuarioAtualizado } = usuarioAtualizado;
 
       return res.status(200).json({
@@ -277,7 +266,6 @@ export class UserController {
   async delete(req, res) {
     const { cpf } = req.user;
     try {
-      // 🔎 Verifica se o usuário existe
       const [rows] = await pool.query("SELECT * FROM usuario WHERE cpf = ?", [
         cpf,
       ]);
@@ -286,7 +274,6 @@ export class UserController {
         return res.status(404).json({ message: "Usuário não encontrado." });
       }
 
-      // 🧱 Remove o usuário
       await pool.query("DELETE FROM usuario WHERE cpf = ?", [cpf]);
 
       return res.status(200).json({ message: "Usuário excluído com sucesso." });

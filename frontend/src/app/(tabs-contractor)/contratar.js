@@ -5,7 +5,6 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
-  Alert,
   ScrollView,
   Platform,
 } from "react-native";
@@ -15,6 +14,7 @@ import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { MaskedTextInput } from "react-native-mask-text";
+import Toast from "react-native-toast-message";
 
 export default function ContratarPage() {
   const { cpfMusico, nomeMusico, instrumentosMusico } = useLocalSearchParams();
@@ -28,6 +28,16 @@ export default function ContratarPage() {
   function onDateSelected(event, selectedDate) {
     setShowDatePicker(false);
     if (selectedDate) {
+      const hoje = new Date();
+      if (selectedDate < hoje) {
+        Toast.show({
+          type: "error",
+          text1: "Data inválida",
+          text2: "Insira uma data futura",
+          position: "top",
+        });
+        return;
+      }
       const ano = selectedDate.getFullYear();
       const mes = String(selectedDate.getMonth() + 1).padStart(2, "0");
       const dia = String(selectedDate.getDate()).padStart(2, "0");
@@ -36,14 +46,33 @@ export default function ContratarPage() {
   }
 
   async function handleContratar() {
-    if (!dataEvento || !horario || !localizacao) {
-      return Alert.alert("Campos obrigatórios", "Preencha todos os campos.");
+    if (!dataEvento || !horario) {
+      return Toast.show({
+        type: "error",
+        text1: "Campos obrigatórios",
+        text2: "Preencha data e horário.",
+        position: "top",
+      });
+    }
+
+    if (!localizacao) {
+      return Toast.show({
+        type: "error",
+        text1: "Localização obrigatória",
+        text2: "Informe o endereço completo.",
+        position: "top",
+      });
     }
 
     try {
       const userDataString = await AsyncStorage.getItem("userData");
       if (!userDataString) {
-        Alert.alert("Erro", "Usuário não encontrado. Faça login novamente.");
+        Toast.show({
+          type: "error",
+          text1: "Erro",
+          text2: "Usuário não encontrado. Faça login novamente.",
+          position: "top",
+        });
         return;
       }
       const userData = JSON.parse(userDataString);
@@ -59,18 +88,29 @@ export default function ContratarPage() {
         observacoes,
       };
 
-      console.log("Payload para contratar:", payload);
-
       const response = await api.post("/contratacoes", payload);
-
       console.log("Resposta do backend:", response.data);
 
-      Alert.alert("Sucesso", "Solicitação enviada com sucesso!");
-      router.back(); // ou router.replace para não empilhar telas
+      Toast.show({
+        type: "success",
+        text1: "Sucesso",
+        text2: "Solicitação enviada ao músico. Aguarde aprovação.",
+        position: "top",
+      });
 
+      // limpa os campos
+      setDataEvento("");
+      setHorario("");
+      setLocalizacao("");
+      setObservacoes("");
     } catch (error) {
       console.error("Erro ao fazer contratação:", error.response ?? error);
-      Alert.alert("Erro", "Não foi possível realizar a contratação.");
+      Toast.show({
+        type: "error",
+        text1: "Erro",
+        text2: "Não foi possível realizar a contratação.",
+        position: "top",
+      });
     }
   }
 
@@ -100,6 +140,7 @@ export default function ContratarPage() {
               mode="date"
               display="spinner"
               themeVariant="dark"
+              minimumDate={new Date()} // só datas futuras
               onChange={onDateSelected}
             />
           )}
@@ -110,6 +151,7 @@ export default function ContratarPage() {
             type="date"
             style={styles.webDateInput}
             value={dataEvento}
+            min={new Date().toISOString().split("T")[0]} // só datas futuras
             onChange={(e) => setDataEvento(e.target.value)}
           />
         </View>
@@ -156,9 +198,19 @@ export default function ContratarPage() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#0d0d0d", padding: 20 },
-  backButton: { flexDirection: "row", alignItems: "center", marginBottom: 10, width: 100 },
+  backButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+    width: 100,
+  },
   backText: { color: "#fff", marginLeft: 10, fontSize: 16 },
-  titulo: { fontSize: 26, color: "#fff", fontWeight: "bold", marginBottom: 20 },
+  titulo: {
+    fontSize: 26,
+    color: "#fff",
+    fontWeight: "bold",
+    marginBottom: 20,
+  },
   label: { color: "#fff", marginBottom: 6, marginTop: 6, fontSize: 15 },
   input: {
     backgroundColor: "#1c1c1c",
@@ -169,7 +221,13 @@ const styles = StyleSheet.create({
     borderColor: "#333",
     marginBottom: 12,
   },
-  botao: { backgroundColor: "#A020F0", padding: 14, borderRadius: 12, alignItems: "center", marginTop: 10 },
+  botao: {
+    backgroundColor: "#A020F0",
+    padding: 14,
+    borderRadius: 12,
+    alignItems: "center",
+    marginTop: 10,
+  },
   textoBotao: { color: "#fff", fontSize: 17, fontWeight: "bold" },
   webInputWrapper: {
     borderWidth: 1,
@@ -181,5 +239,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: 12,
   },
-  webDateInput: { width: "100%", height: "100%", backgroundColor: "transparent", color: "#fff", paddingHorizontal: 12, border: "none", outline: "none" },
+  webDateInput: {
+    width: "100%",
+    height: "100%",
+    backgroundColor: "transparent",
+    color: "#fff",
+    paddingHorizontal: 12,
+    border: "none",
+    outline: "none",
+  },
 });

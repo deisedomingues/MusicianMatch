@@ -75,7 +75,9 @@ export default function SolicitacoesRecebidas() {
 
       <Text style={styles.title}>Solicitações Recebidas</Text>
       <Text style={{ color: "#ccc", marginBottom: 12 }}>
-        Aqui fica as solicitações dos seus serviços, como Musicista.
+        Aqui estão suas solicitações de trabalho.
+        Responda para seu contratante.
+        
       </Text>
 
       {solicitacoes.length === 0 ? (
