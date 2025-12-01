@@ -13,15 +13,12 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-  ssl: {
-    ca: fs.readFileSync('./certs/ca.pem')
-  },
 });
 
 try {
   const connection = await pool.getConnection();
   console.log("✅ Conectado ao MySQL com sucesso!");
-  coannection.release();
+  connection.release();
 } catch (error) {
   console.error("❌ Erro ao conectar ao MySQL:", error.message);
 }

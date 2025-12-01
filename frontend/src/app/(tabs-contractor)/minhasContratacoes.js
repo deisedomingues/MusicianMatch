@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   FlatList,
   ActivityIndicator,
+  Linking,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import api from "../api/api";
@@ -21,14 +22,19 @@ export default function MinhasContratacoes() {
   const carregarContratacoes = async () => {
     setLoading(true);
     const st = await AsyncStorage.getItem("userData");
-    if (!st) return router.replace("/auth/login");
+    if (!st) {
+      setLoading(false);
+      return router.replace("/auth/login");
+    }
 
     const u = JSON.parse(st);
     setUser(u);
 
     try {
       const { data } = await api.get(`/contratacoes`);
-      const minhas = data.filter((c) => c.cpf_contratante === u.cpf);
+      const minhas = Array.isArray(data)
+        ? data.filter((c) => c.cpf_contratante === u.cpf)
+        : [];
       setContratacoes(minhas);
     } catch (err) {
       console.error("Erro ao carregar contratações:", err);
@@ -43,12 +49,21 @@ export default function MinhasContratacoes() {
     }, [])
   );
 
-  if (loading)
+  const abrirWhatsApp = (numeroComDDI, nome) => {
+    if (!numeroComDDI) return;
+    const link = `https://wa.me/${numeroComDDI}?text=Olá%20${encodeURIComponent(
+      nome || "músico"
+    )},%20gostaria%20de%20falar%20sobre%20a%20contratação`;
+    Linking.openURL(link);
+  };
+
+  if (loading) {
     return (
       <View style={styles.loading}>
         <ActivityIndicator color="#fff" size="large" />
       </View>
     );
+  }
 
   return (
     <View style={styles.container}>
@@ -64,12 +79,12 @@ export default function MinhasContratacoes() {
             <View style={styles.card}>
               <Text style={styles.label}>Músico</Text>
               <Text style={styles.value}>
-                {item.nome_musico || item.cpf_musico}
+                {item.nome_musico || item.cpf_musico || "—"}
               </Text>
 
               <Text style={styles.label}>Data</Text>
               <Text style={styles.value}>
-                {formatDate(item.data_evento) || "—"}
+                {item.data_evento ? formatDate(item.data_evento) : "—"}
               </Text>
 
               <Text style={styles.label}>Local</Text>
@@ -89,11 +104,36 @@ export default function MinhasContratacoes() {
                   },
                 ]}
               >
-                {item.status}
+                {item.status || "—"}
               </Text>
 
-              {item.status === "confirmado" &&
-                (item.avaliado ? (
+              {/* Telefone e Email sempre visíveis (vindos do backend) */}
+              <Text style={styles.label}>Telefone</Text>
+              <Text style={styles.value}>{item.telefone_musico || "—"}</Text>
+
+              <Text style={styles.label}>Email</Text>
+              <Text style={styles.value}>{item.email_musico || "—"}</Text>
+
+              {/* Botão WhatsApp aparece somente quando status for confirmado */}
+              {item.status === "confirmado" && item.telefone_musico_whatsapp ? (
+                <TouchableOpacity
+                  style={styles.whatsappButton}
+                  onPress={() =>
+                    abrirWhatsApp(
+                      item.telefone_musico_whatsapp,
+                      item.nome_musico
+                    )
+                  }
+                >
+                  <Text style={styles.whatsappText}>
+                    Entrar em contato pelo WhatsApp
+                  </Text>
+                </TouchableOpacity>
+              ) : null}
+
+              {/* Botão Avaliar apenas quando confirmado */}
+              {item.status === "confirmado" ? (
+                item.avaliado ? (
                   <View style={styles.avaliadoBox}>
                     <Text style={styles.avaliadoText}>
                       Você já avaliou esta contratação
@@ -115,7 +155,8 @@ export default function MinhasContratacoes() {
                   >
                     <Text style={styles.buttonText}>Avaliar</Text>
                   </TouchableOpacity>
-                ))}
+                )
+              ) : null}
             </View>
           )}
         />
@@ -148,6 +189,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   buttonText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
+
+  whatsappButton: {
+    backgroundColor: "#25D366", // verde WhatsApp
+    marginTop: 12,
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  whatsappText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
 
   avaliadoBox: {
     marginTop: 12,

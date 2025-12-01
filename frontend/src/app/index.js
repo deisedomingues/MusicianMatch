@@ -13,7 +13,7 @@ import backgroundSplash from "./assets/background-splash.png";
 
 export default function Index() {
   function Login() {
-    router.push("/auth/login"); // corrigido
+    router.navigate("/auth/login");
   }
 
   return (
@@ -66,7 +66,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     width: "100%",
-    maxWidth: 375, // corrigido
+    maxWidth: "375px",
   },
   image: {
     flex: 1,
@@ -75,6 +75,7 @@ const styles = StyleSheet.create({
     resizeMode: "cover",
     justifyContent: "flex-end",
   },
+
   containerForm: {
     flex: 1,
     maxHeight: 400,
@@ -84,7 +85,7 @@ const styles = StyleSheet.create({
   title: {
     color: "#fff",
     fontSize: 35,
-    fontWeight: "normal", // corrigido
+    fontWeight: "regular",
     marginTop: 28,
   },
   title_bold: {
@@ -100,7 +101,7 @@ const styles = StyleSheet.create({
   label: {
     color: "#fff",
     fontSize: 18,
-    fontWeight: "normal", // corrigido
+    fontWeight: "normal",
   },
   button: {
     backgroundColor: "#8F16A7",
