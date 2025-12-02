@@ -157,8 +157,15 @@ export default function EditarPerfil() {
     }
   };
 
-  const logout = () => {
-    router.replace("/auth/login");
+  const logout = async () => {
+    try {
+      await AsyncStorage.removeItem("userToken");
+      await AsyncStorage.removeItem("userData");
+    } catch (e) {
+      console.error("Erro ao fazer logout:", e);
+    } finally {
+      router.replace("/auth/login");
+    }
   };
 
   if (loading) {

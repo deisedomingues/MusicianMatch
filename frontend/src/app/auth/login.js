@@ -61,6 +61,8 @@ export default function Login() {
 
       await AsyncStorage.setItem("userToken", token);
       await AsyncStorage.setItem("userData", JSON.stringify(usuario));
+      await AsyncStorage.setItem("tipoUsuario", usuario.tipo);
+      await AsyncStorage.setItem("tipoUsuario", response.data.usuario.tipo);
 
       Toast.show({
         type: "success",

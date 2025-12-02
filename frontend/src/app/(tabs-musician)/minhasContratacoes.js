@@ -1,3 +1,4 @@
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -7,133 +8,140 @@ import {
   ActivityIndicator,
   Linking,
 } from "react-native";
-import { useState, useEffect } from "react";
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import api from "../api/api";
+import { useRouter, useFocusEffect } from "expo-router";
 import formatDate from "../utils/dateformat";
+import { Ionicons } from "@expo/vector-icons"; // Importado para o botão Voltar
 
-export default function ContratacoesMusico() {
+// Função para definir a cor do texto do status (reutilizada do tabs-contractor)
+const getStatusTextColor = (status) => {
+  switch (status) {
+    case "confirmado":
+      return "#0B8A1F";
+    case "cancelado":
+      return "#B81D1D";
+    case "pendente":
+    default:
+      return "#C9A000";
+  }
+};
+
+export default function MinhasContratacoesMusicoContratante() {
+  const [user, setUser] = useState(null);
+  const [contratacoes, setContratacoes] = useState([]);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [contratacoes, setContratacoes] = useState([]);
-
-  // carrega dados do músico logado
-  const loadUser = async () => {
-    try {
-      const stored = await AsyncStorage.getItem("userData");
-      if (!stored) {
-        router.replace("/auth/login");
-        return;
-      }
-      const parsedUser = JSON.parse(stored);
-      setUser(parsedUser);
-      return parsedUser;
-    } catch (err) {
-      console.log("Erro ao carregar usuário", err);
-    }
-  };
-
-  // busca contratações desse músico
-  const loadContratacoes = async (cpf) => {
-    try {
-      const { data } = await api.get(`/contratacoes/musico/${cpf}`);
-      setContratacoes(data);
-    } catch (err) {
-      console.log("Erro ao buscar contratações:", err);
-    }
-  };
-
-  useEffect(() => {
-    const init = async () => {
-      const u = await loadUser();
-      if (u?.cpf) await loadContratacoes(u.cpf);
+  const carregarContratacoes = async () => {
+    setLoading(true);
+    const st = await AsyncStorage.getItem("userData");
+    if (!st) {
       setLoading(false);
-    };
-    init();
-  }, []);
+      return router.replace("/auth/login");
+    }
 
-  // botão voltar → home do músico
-  const handleBack = () => router.replace("/(tabs-musician)/home");
+    const u = JSON.parse(st);
+    setUser(u);
+
+    try {
+      // 1. Busca TODAS as contratações (Rota adaptada do tabs-contractor)
+      const { data } = await api.get(`/contratacoes`);
+      // 2. Filtra APENAS as contratações onde o usuário logado é o CONTRATANTE
+      const minhas = Array.isArray(data)
+        ? data.filter((c) => c.cpf_contratante === u.cpf)
+        : [];
+      setContratacoes(minhas);
+    } catch (err) {
+      console.error("Erro ao carregar contratações:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      carregarContratacoes();
+    }, [])
+  );
 
   const abrirWhatsApp = (numeroComDDI, nome) => {
     if (!numeroComDDI) return;
     const link = `https://wa.me/${numeroComDDI}?text=Olá%20${encodeURIComponent(
-      nome || "contratante"
+      nome || "músico"
     )},%20gostaria%20de%20falar%20sobre%20a%20contratação`;
     Linking.openURL(link);
   };
+  
+  const handleBack = () => router.replace("/(tabs-musician)/home");
 
-  if (loading)
+
+  if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#fff" />
-        <Text style={{ color: "#fff", marginTop: 10 }}>Carregando...</Text>
+      <View style={styles.loading}>
+        <ActivityIndicator color="#fff" size="large" />
       </View>
     );
+  }
 
   return (
     <View style={styles.container}>
-      {/* BOTÃO VOLTAR */}
-      <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-        <Ionicons name="chevron-back" size={18} color="#fff" />
-        <Text style={styles.backText}>Voltar</Text>
-      </TouchableOpacity>
+        {/* BOTÃO VOLTAR (Mantido da versão anterior em tabs-musician) */}
+        <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+            <Ionicons name="chevron-back" size={18} color="#fff" />
+            <Text style={styles.backText}>Voltar</Text>
+        </TouchableOpacity>
 
-      <Text style={styles.title}>Minhas Contratações</Text>
+      <Text style={styles.title}>Minhas Contratações (Como Contratante)</Text>
 
       {contratacoes.length === 0 ? (
-        <Text style={styles.emptyText}>Você ainda não foi contratado.</Text>
+        <Text style={styles.empty}>Você ainda não fez contratações.</Text>
       ) : (
         <FlatList
           data={contratacoes}
           keyExtractor={(item) => String(item.id)}
           renderItem={({ item }) => (
             <View style={styles.card}>
-              {/* Nome do contratante */}
-              <Text style={styles.label}>Contratante:</Text>
+              <Text style={styles.label}>Músico Contratado</Text>
               <Text style={styles.value}>
-                {item.nome_contratante || item.cpf_contratante || "—"}
+                {item.nome_musico || item.cpf_musico || "—"}
               </Text>
 
-              {/* Data do evento */}
-              <Text style={styles.label}>Data do Evento:</Text>
+              <Text style={styles.label}>Data do Evento</Text>
               <Text style={styles.value}>
                 {item.data_evento ? formatDate(item.data_evento) : "—"}
               </Text>
 
-              {/* Local */}
-              <Text style={styles.label}>Local:</Text>
+              <Text style={styles.label}>Local</Text>
               <Text style={styles.value}>{item.localizacao || "—"}</Text>
 
-              {/* Observações */}
-              <Text style={styles.label}>Observações:</Text>
-              <Text style={styles.value}>{item.observacoes || "—"}</Text>
+              <Text style={styles.label}>Status</Text>
+              <Text
+                style={[
+                  styles.value,
+                  {
+                    color: getStatusTextColor(item.status),
+                  },
+                ]}
+              >
+                {item.status || "—"}
+              </Text>
 
-              {/* Status */}
-              <Text style={styles.label}>Status:</Text>
-              <View style={[styles.statusBox, getStatusColor(item.status)]}>
-                <Text style={styles.statusText}>{item.status}</Text>
-              </View>
+              {/* Telefone e Email do Músico */}
+              <Text style={styles.label}>Telefone do Músico</Text>
+              <Text style={styles.value}>{item.telefone_musico || "—"}</Text>
 
-              {/* Telefone e Email do contratante (vindos do backend) */}
-              <Text style={styles.label}>Telefone</Text>
-              <Text style={styles.value}>{item.telefone_contratante || "—"}</Text>
-
-              <Text style={styles.label}>Email</Text>
-              <Text style={styles.value}>{item.email_contratante || "—"}</Text>
+              <Text style={styles.label}>Email do Músico</Text>
+              <Text style={styles.value}>{item.email_musico || "—"}</Text>
 
               {/* Botão WhatsApp aparece somente quando status for confirmado */}
-              {item.status === "confirmado" && item.telefone_contratante_whatsapp ? (
+              {item.status === "confirmado" && item.telefone_musico_whatsapp ? (
                 <TouchableOpacity
                   style={styles.whatsappButton}
                   onPress={() =>
                     abrirWhatsApp(
-                      item.telefone_contratante_whatsapp,
-                      item.nome_contratante
+                      item.telefone_musico_whatsapp,
+                      item.nome_musico
                     )
                   }
                 >
@@ -141,6 +149,34 @@ export default function ContratacoesMusico() {
                     Entrar em contato pelo WhatsApp
                   </Text>
                 </TouchableOpacity>
+              ) : null}
+
+              {/* Botão Avaliar apenas quando confirmado */}
+              {item.status === "confirmado" ? (
+                item.avaliado ? (
+                  <View style={styles.avaliadoBox}>
+                    <Text style={styles.avaliadoText}>
+                      Você já avaliou esta contratação
+                    </Text>
+                  </View>
+                ) : (
+                  <TouchableOpacity
+                    style={styles.button}
+                    onPress={() =>
+                      router.push({
+                        
+                        pathname: "/(tabs-musician)/avaliarMusico",
+                        params: {
+                          cpf_contratante: item.cpf_contratante, 
+                          cpf_musico: item.cpf_musico,
+                          id_contratacao: item.id,
+                        },
+                      })
+                    }
+                  >
+                    <Text style={styles.buttonText}>Avaliar</Text>
+                  </TouchableOpacity>
+                )
               ) : null}
             </View>
           )}
@@ -150,99 +186,30 @@ export default function ContratacoesMusico() {
   );
 }
 
-// define cores do status
-function getStatusColor(status) {
-  switch (status) {
-    case "pendente":
-      return { backgroundColor: "#C9A000" };
-    case "confirmado":
-      return { backgroundColor: "#0B8A1F" };
-    case "cancelado":
-      return { backgroundColor: "#B81D1D" };
-    default:
-      return { backgroundColor: "#444" };
-  }
-}
-
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#1A181D",
-    padding: 16,
-  },
-
-  loadingContainer: {
-    flex: 1,
-    backgroundColor: "#1A181D",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  backButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 20,
-    width: 90,
-  },
-
-  backText: {
-    color: "#fff",
-    marginLeft: 12,
-    fontSize: 16,
-  },
-
-  title: {
-    color: "#fff",
-    fontSize: 22,
-    fontWeight: "bold",
-    marginBottom: 25,
-  },
-
-  emptyText: {
-    color: "#aaa",
-    fontSize: 16,
-    textAlign: "center",
-    marginTop: 40,
-  },
+  container: { flex: 1, backgroundColor: "#1A181D", padding: 16 },
+  loading: { flex: 1, justifyContent: "center", alignItems: "center" },
+  title: { color: "#fff", fontSize: 22, fontWeight: "bold", marginBottom: 25 },
+  empty: { color: "#aaa", marginTop: 40, textAlign: "center" },
 
   card: {
     backgroundColor: "#1E1E2A",
-    padding: 16,
-    borderRadius: 14,
-    marginBottom: 16,
-    shadowColor: "#000",
-    shadowOpacity: 0.3,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 4,
+    padding: 14,
+    borderRadius: 12,
+    marginBottom: 14,
   },
 
-  label: {
-    color: "#A0A0A0",
-    fontSize: 12,
-    marginTop: 6,
-  },
+  label: { color: "#A0A0A0", fontSize: 12, marginTop: 6 },
+  value: { color: "#fff", fontSize: 16 },
 
-  value: {
-    color: "#fff",
-    fontSize: 16,
-    marginBottom: 6,
-  },
-
-  statusBox: {
-    paddingVertical: 6,
-    paddingHorizontal: 10,
+  button: {
+    backgroundColor: "#6C63FF",
+    marginTop: 12,
+    paddingVertical: 10,
     borderRadius: 8,
-    marginTop: 4,
-    width: 120,
     alignItems: "center",
   },
-
-  statusText: {
-    color: "#fff",
-    fontWeight: "bold",
-    textTransform: "capitalize",
-  },
+  buttonText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
 
   whatsappButton: {
     backgroundColor: "#25D366", // verde WhatsApp
@@ -252,4 +219,26 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   whatsappText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
+
+  avaliadoBox: {
+    marginTop: 12,
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: "center",
+    backgroundColor: "#2E2C30",
+  },
+  avaliadoText: { color: "#aaa", fontSize: 14 },
+  
+  
+  backButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 20,
+    width: 90,
+  },
+  backText: {
+    color: "#fff",
+    marginLeft: 12,
+    fontSize: 16,
+  },
 });

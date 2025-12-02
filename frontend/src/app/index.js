@@ -13,7 +13,7 @@ import backgroundSplash from "./assets/background-splash.png";
 
 export default function Index() {
   function Login() {
-    router.navigate("/auth/login");
+    router.replace("/loading");
   }
 
   return (
